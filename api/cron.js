@@ -36,7 +36,8 @@ module.exports = async function handler(req, res) {
 
     // Step 2: Score items against projects
     console.log('[cron] Starting scoring phase');
-    const items = await scoreItems(rawItems, config);
+    const scoringResult = await scoreItems(rawItems, config);
+    const items = scoringResult.items; // DEBUG: destructure
     console.log(`[cron] Scoring returned ${items.length} qualifying items`);
 
     // Step 3: Save or skip
@@ -44,6 +45,7 @@ module.exports = async function handler(req, res) {
       return sendJSON(res, {
         status: 'skipped',
         reason: 'No items met scoring threshold',
+        _debug: { threshold: scoringResult.threshold, allScoredItems: scoringResult._debugAll }, // DEBUG
       });
     }
 
@@ -61,6 +63,7 @@ module.exports = async function handler(req, res) {
       status: 'published',
       date: today,
       itemCount: items.length,
+      _debug: { threshold: scoringResult.threshold, allScoredItems: scoringResult._debugAll }, // DEBUG
     });
   } catch (err) {
     console.error('[cron] Pipeline failed:', err.message || err);
