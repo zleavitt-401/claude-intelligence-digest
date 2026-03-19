@@ -34,6 +34,22 @@ module.exports = async function handler(req, res) {
     const rawItems = await research();
     console.log(`[cron] Research returned ${rawItems.length} raw items`);
 
+    // DEBUG: include raw research results in all responses
+    const debugRawItems = rawItems.map((item) => ({
+      headline: item.headline,
+      byline: item.byline,
+      sourceUrl: item.sourceUrl,
+      publishedAt: item.publishedAt,
+    }));
+
+    if (rawItems.length === 0) {
+      return sendJSON(res, {
+        status: 'skipped',
+        reason: 'No items returned from research',
+        _debug: { rawItemCount: 0, rawItems: [] },
+      });
+    }
+
     // Step 2: Score items against projects
     console.log('[cron] Starting scoring phase');
     const scoringResult = await scoreItems(rawItems, config);
@@ -45,7 +61,7 @@ module.exports = async function handler(req, res) {
       return sendJSON(res, {
         status: 'skipped',
         reason: 'No items met scoring threshold',
-        _debug: { threshold: scoringResult.threshold, allScoredItems: scoringResult._debugAll }, // DEBUG
+        _debug: { rawItemCount: rawItems.length, rawItems: debugRawItems, threshold: scoringResult.threshold, allScoredItems: scoringResult._debugAll }, // DEBUG
       });
     }
 
@@ -63,7 +79,7 @@ module.exports = async function handler(req, res) {
       status: 'published',
       date: today,
       itemCount: items.length,
-      _debug: { threshold: scoringResult.threshold, allScoredItems: scoringResult._debugAll }, // DEBUG
+      _debug: { rawItemCount: rawItems.length, rawItems: debugRawItems, threshold: scoringResult.threshold, allScoredItems: scoringResult._debugAll }, // DEBUG
     });
   } catch (err) {
     console.error('[cron] Pipeline failed:', err.message || err);
