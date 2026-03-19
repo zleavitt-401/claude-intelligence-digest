@@ -46,7 +46,7 @@ module.exports = async function handler(req, res) {
       return sendJSON(res, {
         status: 'skipped',
         reason: 'No items returned from research',
-        _debug: { rawItemCount: 0, rawItems: [] },
+        _debug: { rawItemCount: 0, rawItems: [], claudeRawResponse: research._lastRawResponse || null },
       });
     }
 
