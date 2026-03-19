@@ -91,7 +91,7 @@ module.exports = async function handler(req, res) {
     // Call Claude API
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return sendError(res, 500, 'Chat request failed');
+      return sendError(res, 500, 'ANTHROPIC_API_KEY is not set');
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -102,7 +102,7 @@ module.exports = async function handler(req, res) {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20250514',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2048,
         system: systemPrompt,
         messages: messages,
@@ -110,8 +110,9 @@ module.exports = async function handler(req, res) {
     });
 
     if (!response.ok) {
-      console.error('Claude API error:', response.status);
-      return sendError(res, 500, 'Chat request failed');
+      const errText = await response.text();
+      console.error(`[chat] Claude API error (${response.status}): ${errText}`);
+      return sendError(res, 500, `Claude API error ${response.status}: ${errText}`);
     }
 
     const data = await response.json();
@@ -125,7 +126,7 @@ module.exports = async function handler(req, res) {
 
     return sendJSON(res, { answer });
   } catch (err) {
-    console.error('Chat handler error:', err);
-    return sendError(res, 500, 'Chat request failed');
+    console.error('[chat] Handler error:', err);
+    return sendError(res, 500, err.message || String(err));
   }
 };
