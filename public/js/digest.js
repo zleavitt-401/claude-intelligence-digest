@@ -83,12 +83,17 @@
     });
 
     if (item.sourceUrl || item.source_url) {
+      var url = item.sourceUrl || item.source_url;
       var src = document.createElement('a');
       src.className = 'story-source';
-      src.href = item.sourceUrl || item.source_url;
+      src.href = url;
       src.target = '_blank';
       src.rel = 'noopener noreferrer';
-      src.textContent = 'Source';
+      try {
+        src.textContent = new URL(url).hostname.replace(/^www\./, '');
+      } catch (e) {
+        src.textContent = 'Source';
+      }
       meta.appendChild(src);
     }
 
